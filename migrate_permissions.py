@@ -88,23 +88,19 @@ privileges = [
 grant_cmds = []
 volume_grant_cmds = []
 
-# Retrieve tables in the destination catalog to check which tables were cloned
-dest_tables_query = f"""
-SELECT table_schema, table_name
-FROM system.information_schema.tables
-WHERE table_catalog = '{destination_catalog}'
-"""
 
-try:
-    dest_table_df = spark.sql(dest_tables_query)
-    dest_tables = {
-        f"{row['table_schema']}.{row['table_name']}" for row in dest_table_df.collect()
-    }
-except Exception:
-    dest_tables = set()
+def table_exists(catalog: str, schema: str, table: str) -> bool:
+    """Return True if the table exists in the destination catalog."""
+    try:
+        result = spark.sql(
+            f"SHOW TABLES IN {catalog}.{schema} LIKE '{table}'"
+        ).collect()
+        return len(result) > 0
+    except Exception:
+        return False
 
 for p in privileges:
-    if p["type"] == "TABLE" and f"{p['schema']}.{p['name']}" not in dest_tables:
+    if p["type"] == "TABLE" and not table_exists(destination_catalog, p["schema"], p["name"]):
         continue
 
     object_identifier = f"{destination_catalog}.{p['schema']}.{p['name']}"
