@@ -39,7 +39,34 @@ FROM system.information_schema.object_privileges
 WHERE object_catalog = '{source_catalog}'
 """
 
-priv_df = spark.sql(query)
+try:
+    priv_df = spark.sql(query)
+except Exception:
+    fallback_query = f"""
+    SELECT
+      tp.table_schema AS object_schema,
+      tp.table_name AS object_name,
+      t.table_type AS object_type,
+      tp.grantee AS principal,
+      tp.privilege_type AS privilege_type
+    FROM system.information_schema.table_privileges tp
+    LEFT JOIN system.information_schema.tables t
+      ON tp.table_catalog = t.table_catalog
+     AND tp.table_schema = t.table_schema
+     AND tp.table_name = t.table_name
+    WHERE tp.table_catalog = '{source_catalog}'
+    UNION ALL
+    SELECT
+      volume_schema AS object_schema,
+      volume_name AS object_name,
+      'VOLUME' AS object_type,
+      grantee AS principal,
+      privilege_type
+    FROM system.information_schema.volume_privileges
+    WHERE volume_catalog = '{source_catalog}'
+    """
+
+    priv_df = spark.sql(fallback_query)
 privileges = [
     {
         "schema": row["object_schema"],
