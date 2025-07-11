@@ -29,6 +29,23 @@ if ! command -v databricks > /dev/null; then
     exit 1
 fi
 
+# Ensure the DATABRICKS_CONFIG_PROFILE env var is set correctly
+if [[ -z "${DATABRICKS_CONFIG_PROFILE:-}" ]]; then
+    echo "DATABRICKS_CONFIG_PROFILE environment variable is not set." >&2
+    echo "Example: export DATABRICKS_CONFIG_PROFILE=dev" >&2
+    exit 1
+fi
+
+case "$DATABRICKS_CONFIG_PROFILE" in
+    dev|staging|prod)
+        ;;
+    *)
+        echo "DATABRICKS_CONFIG_PROFILE must be one of: dev, staging, prod." >&2
+        echo "Example: export DATABRICKS_CONFIG_PROFILE=dev" >&2
+        exit 1
+        ;;
+esac
+
 # Create temporary directory excluding .git
 TMP_DIR="$(mktemp -d)"
 rsync -a --exclude '.git' "$REPO_ROOT/" "$TMP_DIR/"
@@ -37,7 +54,7 @@ rsync -a --exclude '.git' "$REPO_ROOT/" "$TMP_DIR/"
  databricks workspace mkdirs "$WORKSPACE_PATH"
 
 # Import directory recursively, overwriting existing files
- databricks workspace import_dir "$TMP_DIR" "$WORKSPACE_PATH" --overwrite
+ databricks workspace import-dir "$TMP_DIR" "$WORKSPACE_PATH" --overwrite
 
 rm -rf "$TMP_DIR"
 
