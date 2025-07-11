@@ -1,0 +1,25 @@
+select *
+from system.information_schema.volumes
+where volume_catalog = 'edsm' and
+volume_type = 'EXTERNAL'
+
+df = spark.sql("""
+    select volume_catalog, volume_schema, volume_name, storage_location
+    from system.information_schema.volumes
+    where volume_catalog = 'edsm' and volume_type = 'EXTERNAL'
+""")
+
+volumes = [
+    {
+        "catalog": row["volume_catalog"],
+        "schema": row["volume_schema"],
+        "name": row["volume_name"],
+        "location": row["storage_location"]
+    }
+    for row in df.collect()
+]
+
+import json
+
+dbutils.fs.put("dbfs:/tmp/volume_mounts.json", json.dumps(volumes, indent=4), overwrite=True)
+
