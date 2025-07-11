@@ -1,7 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Move Volumes Between Catalogs
-# MAGIC This notebook reads all volumes from a source catalog and generates SQL commands to drop those volumes from the source catalog and recreate them in a destination catalog with the same schema and location.
+# MAGIC This notebook reads all **external** volumes from a source catalog and generates
+# MAGIC SQL commands to drop those volumes from the source catalog and recreate them
+# MAGIC in a destination catalog with the same schema and location. Managed volumes
+# MAGIC are ignored.
 
 # COMMAND ----------
 
@@ -32,6 +35,7 @@ query = f"""
 SELECT volume_catalog, volume_schema, volume_name, storage_location
 FROM system.information_schema.volumes
 WHERE volume_catalog = '{source_catalog}'
+  AND volume_type = 'EXTERNAL'
 """
 
 volumes_df = spark.sql(query)
