@@ -100,7 +100,10 @@ def table_exists(catalog: str, schema: str, table: str) -> bool:
         return False
 
 for p in privileges:
-    if not table_exists(destination_catalog, p["schema"], p["name"]):
+    if not p["type"] == "VOLUME" and not table_exists(destination_catalog, p["schema"], p["name"]):
+        continue
+
+    if p["schema"] == "information_schema":
         continue
 
     object_identifier = f"{destination_catalog}.{p['schema']}.{p['name']}"
