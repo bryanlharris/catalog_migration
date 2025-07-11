@@ -86,9 +86,28 @@ privileges = [
 # COMMAND ----------
 
 grant_cmds = []
+
+# Retrieve tables in the destination catalog to check which tables were cloned
+dest_tables_query = f"""
+SELECT table_schema, table_name
+FROM system.information_schema.tables
+WHERE table_catalog = '{destination_catalog}'
+"""
+
+try:
+    dest_table_df = spark.sql(dest_tables_query)
+    dest_tables = {
+        f"{row['table_schema']}.{row['table_name']}" for row in dest_table_df.collect()
+    }
+except Exception:
+    dest_tables = set()
+
 for p in privileges:
+    if p["type"] == "TABLE" and f"{p['schema']}.{p['name']}" not in dest_tables:
+        continue
+    object_identifier = f"{destination_catalog}.{p['schema']}.{p['name']}"
     grant_cmds.append(
-        f"GRANT {p['privilege']} ON {p['type']} {destination_catalog}.{p['schema']}.{p['name']} TO `{p['principal']}`;"
+        f"GRANT {p['privilege']} ON {object_identifier} TO `{p['principal']}`;"
     )
 
 # COMMAND ----------
