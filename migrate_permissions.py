@@ -86,6 +86,7 @@ privileges = [
 # COMMAND ----------
 
 grant_cmds = []
+volume_grant_cmds = []
 
 # Retrieve tables in the destination catalog to check which tables were cloned
 dest_tables_query = f"""
@@ -105,17 +106,34 @@ except Exception:
 for p in privileges:
     if p["type"] == "TABLE" and f"{p['schema']}.{p['name']}" not in dest_tables:
         continue
+
     object_identifier = f"{destination_catalog}.{p['schema']}.{p['name']}"
-    grant_cmds.append(
-        f"GRANT {p['privilege']} ON {object_identifier} TO `{p['principal']}`;"
-    )
+
+    if p["type"] == "VOLUME":
+        volume_grant_cmds.append(
+            f"GRANT {p['privilege']} ON VOLUME {object_identifier} TO `{p['principal']}`;"
+        )
+    else:
+        grant_cmds.append(
+            f"GRANT {p['privilege']} ON {object_identifier} TO `{p['principal']}`;"
+        )
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Display Commands
+# MAGIC ## Display GRANT Commands (Non-Volume)
 
 # COMMAND ----------
 
 for cmd in grant_cmds:
+    print(cmd)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Display GRANT Commands for Volumes
+
+# COMMAND ----------
+
+for cmd in volume_grant_cmds:
     print(cmd)
