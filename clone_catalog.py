@@ -2,12 +2,12 @@
 # MAGIC %md
 # MAGIC # Clone a Catalog
 # MAGIC This notebook uses [DiscoverX](https://github.com/databrickslabs/discoverx) to clone all schemas and tables from a source catalog into a destination catalog using Delta Lake `CLONE`.
-# MAGIC 
+# MAGIC
 # MAGIC Specify the source and destination catalogs with the widgets below and run all cells.
 
 # COMMAND ----------
 
-# MAGIC %pip install dbl-discoverx==0.0.9
+# MAGIC %pip install dbl-discoverx
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
