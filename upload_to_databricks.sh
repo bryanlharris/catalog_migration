@@ -5,16 +5,17 @@ set -euo pipefail
 # Excludes the .git directory and overwrites any existing workspace files.
 
 usage() {
-    echo "Usage: $0 <workspace-path>" >&2
-    echo "Example: $0 /Users/me/catalog_migration" >&2
+    echo "Usage: $0 <profile> <workspace-path>" >&2
+    echo "Example: $0 dev /Users/me/catalog_migration" >&2
     exit 1
 }
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 2 ]; then
     usage
 fi
 
-WORKSPACE_PATH="$1"
+PROFILE="$1"
+WORKSPACE_PATH="$2"
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 
@@ -29,19 +30,13 @@ if ! command -v databricks > /dev/null; then
     exit 1
 fi
 
-# Ensure the DATABRICKS_CONFIG_PROFILE env var is set correctly
-if [[ -z "${DATABRICKS_CONFIG_PROFILE:-}" ]]; then
-    echo "DATABRICKS_CONFIG_PROFILE environment variable is not set." >&2
-    echo "Example: export DATABRICKS_CONFIG_PROFILE=dev" >&2
-    exit 1
-fi
-
-case "$DATABRICKS_CONFIG_PROFILE" in
+# Validate the profile argument and export it for the Databricks CLI
+case "$PROFILE" in
     dev|staging|prod)
+        export DATABRICKS_CONFIG_PROFILE="$PROFILE"
         ;;
     *)
-        echo "DATABRICKS_CONFIG_PROFILE must be one of: dev, staging, prod." >&2
-        echo "Example: export DATABRICKS_CONFIG_PROFILE=dev" >&2
+        echo "Profile must be one of: dev, staging, prod." >&2
         exit 1
         ;;
 esac
